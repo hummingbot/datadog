@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hummingbot Reported Volumes</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -14,6 +15,15 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        /* Hummingbot brand display font */
+        @font-face {
+            font-family: 'Satoshi';
+            src: url('assets/Satoshi-Variable.ttf') format('truetype');
+            font-weight: 300 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
         /* =========================================================
            Hummingbot Design System Tokens
            ========================================================= */
@@ -29,29 +39,6 @@
             --bull: #22c55e;
             --bear: #ef4444;
 
-            /* Neutrals */
-            --ink-0: #ffffff;
-            --ink-50: #fafafa;
-            --ink-200: #e5e7eb;
-            --ink-400: #a1a1aa;
-            --ink-600: #52525b;
-            --ink-700: #3f3f46;
-            --ink-800: #2f2f2f;
-            --ink-850: #1f1f22;
-            --ink-900: #1a1a1b;
-            --ink-950: #0f0f0f;
-
-            /* Semantic - Dark theme */
-            --bg: var(--ink-900);
-            --bg-elev: #151819;
-            --bg-muted: #222326;
-            --fg: #f5f7fa;
-            --fg-muted: #a1a1aa;
-            --border: #2f2f2f;
-            --primary: var(--hb-teal);
-            --secondary: var(--hb-yellow);
-            --accent: var(--hb-magenta);
-
             /* Type */
             --font-display: "JetBrains Mono", ui-monospace, monospace;
             --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -62,12 +49,44 @@
             --radius-md: 8px;
             --radius-lg: 12px;
             --radius-full: 9999px;
+        }
 
-            /* Shadows */
-            --shadow-xs: 0 1px 2px -1px rgba(0,0,0,.05), 0 1px 3px 0 rgba(0,0,0,.05);
-            --shadow-glow-teal: 0 0 24px rgba(95,255,215,.35);
-            --shadow-glow-yellow: 0 0 24px rgba(252,219,23,.35);
-            --shadow-glow-magenta: 0 0 24px rgba(229,73,255,.25);
+        :root[data-theme="dark"] {
+            --bg: #1a1a1b;
+            --bg-elev: #151819;
+            --bg-muted: #222326;
+            --fg: #f5f7fa;
+            --fg-muted: #a1a1aa;
+            --border: #2f2f2f;
+            --glass-bg: rgba(21, 24, 25, 0.8);
+            --primary: var(--hb-teal);
+            --secondary: var(--hb-yellow);
+            --accent: var(--hb-magenta);
+            --primary-soft: rgba(95, 255, 215, 0.15);
+            --primary-soft-hover: rgba(95, 255, 215, 0.25);
+            --primary-ring: rgba(95, 255, 215, 0.15);
+            --primary-stroke: rgba(95, 255, 215, 0.3);
+            --chart-label: var(--fg);
+            --shadow-xs: 0 1px 2px -1px rgba(0,0,0,.35), 0 1px 3px 0 rgba(0,0,0,.35);
+        }
+
+        :root[data-theme="light"] {
+            --bg: #f7f8fa;
+            --bg-elev: #ffffff;
+            --bg-muted: #eef1f4;
+            --fg: #0f172a;
+            --fg-muted: #64748b;
+            --border: #e2e8f0;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --primary: var(--hb-cyan);
+            --secondary: var(--hb-orange);
+            --accent: var(--hb-magenta);
+            --primary-soft: rgba(0, 194, 206, 0.12);
+            --primary-soft-hover: rgba(0, 194, 206, 0.20);
+            --primary-ring: rgba(0, 194, 206, 0.18);
+            --primary-stroke: rgba(0, 194, 206, 0.4);
+            --chart-label: var(--fg);
+            --shadow-xs: 0 1px 2px -1px rgba(15,23,42,.08), 0 1px 3px 0 rgba(15,23,42,.06);
         }
 
         * {
@@ -82,6 +101,7 @@
             min-height: 100vh;
             color: var(--fg);
             position: relative;
+            transition: background 0.25s ease, color 0.25s ease;
         }
 
 
@@ -101,10 +121,10 @@
         }
 
         header h1 {
-            font-family: var(--font-display);
-            font-size: clamp(1.5rem, 4vw, 2rem);
-            font-weight: 600;
-            letter-spacing: -0.02em;
+            font-family: 'Satoshi', var(--font-display);
+            font-size: clamp(1.75rem, 4.5vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
             color: var(--fg);
         }
 
@@ -115,9 +135,52 @@
             font-size: 0.875rem;
         }
 
+        .header-actions {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elev);
+            color: var(--fg-muted);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s ease, border-color 0.2s ease, transform 0.25s ease;
+        }
+
+        .icon-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(12deg);
+        }
+
+        .icon-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+        :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+        :root[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+        :root[data-theme="light"] .theme-toggle .icon-moon { display: inline; }
+
         /* Filters - frosted glass */
         .filters {
-            background: rgba(21, 24, 25, 0.8);
+            background: var(--glass-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-radius: var(--radius-lg);
@@ -163,18 +226,18 @@
 
         .filter-group select:hover,
         .filter-group input:hover {
-            border-color: var(--hb-teal);
+            border-color: var(--primary);
         }
 
         .filter-group select:focus,
         .filter-group input:focus {
             outline: none;
-            border-color: var(--hb-teal);
-            box-shadow: 0 0 0 2px rgba(95, 255, 215, 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-ring);
         }
 
         .filter-group select option {
-            background: var(--ink-900);
+            background: var(--bg-elev);
             color: var(--fg);
         }
 
@@ -201,7 +264,7 @@
         }
 
         .multi-select-button:hover {
-            border-color: var(--hb-teal);
+            border-color: var(--primary);
         }
 
         .multi-select-dropdown {
@@ -209,7 +272,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: var(--ink-900);
+            background: var(--bg-elev);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             margin-top: 4px;
@@ -217,7 +280,7 @@
             overflow-y: auto;
             z-index: 1000;
             display: none;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
         }
 
         .multi-select-dropdown.open {
@@ -237,7 +300,7 @@
 
         .multi-select-search:focus {
             outline: none;
-            background: var(--ink-850);
+            background: var(--bg-muted);
         }
 
         .multi-select-option {
@@ -258,7 +321,35 @@
         .multi-select-option input {
             width: auto;
             cursor: pointer;
-            accent-color: var(--hb-teal);
+            accent-color: var(--primary);
+        }
+
+        .multi-select-option .label-text {
+            flex: 1;
+        }
+
+        .only-btn {
+            display: none;
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.15s ease;
+        }
+
+        .only-btn:hover {
+            background: var(--primary-soft);
+        }
+
+        .multi-select-option:hover .only-btn {
+            display: inline-block;
         }
 
         .multi-select-actions {
@@ -281,13 +372,13 @@
         }
 
         .btn-select-all {
-            background: rgba(95, 255, 215, 0.15);
-            color: var(--hb-teal);
-            border: 1px solid rgba(95, 255, 215, 0.3);
+            background: var(--primary-soft);
+            color: var(--primary);
+            border: 1px solid var(--primary-stroke);
         }
 
         .btn-select-all:hover {
-            background: rgba(95, 255, 215, 0.25);
+            background: var(--primary-soft-hover);
         }
 
         .btn-clear-all {
@@ -296,7 +387,7 @@
         }
 
         .btn-clear-all:hover {
-            background: var(--ink-700);
+            background: var(--border);
         }
 
         /* Stats grid - metric cards with glow */
@@ -316,7 +407,7 @@
         }
 
         .stat-card:hover {
-            border-color: var(--ink-700);
+            border-color: var(--fg-muted);
         }
 
         .stat-card h3 {
@@ -365,10 +456,17 @@
         }
 
         /* Exchange table */
+        .table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 16px;
+        }
+
         .exchange-table {
             width: 100%;
+            min-width: 520px;
             border-collapse: collapse;
-            margin-top: 16px;
         }
 
         .exchange-table th,
@@ -401,7 +499,7 @@
         }
 
         .exchange-table .volume {
-            color: var(--hb-teal);
+            color: var(--primary);
             font-weight: 500;
         }
 
@@ -411,9 +509,17 @@
             gap: 12px;
         }
 
-        .bar {
+        .bar-track {
+            width: 150px;
             height: 6px;
-            background: linear-gradient(90deg, var(--hb-teal), var(--hb-cyan));
+            background: var(--bg-muted);
+            border-radius: var(--radius-full);
+            flex-shrink: 0;
+        }
+
+        .bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
             border-radius: var(--radius-full);
         }
 
@@ -432,7 +538,7 @@
 
         /* ApexCharts overrides */
         .apexcharts-tooltip {
-            background: var(--ink-900) !important;
+            background: var(--bg-elev) !important;
             border: 1px solid var(--border) !important;
             color: var(--fg) !important;
             font-family: var(--font-mono) !important;
@@ -446,18 +552,22 @@
         }
 
         .apexcharts-xaxistooltip {
-            background: var(--ink-900) !important;
+            background: var(--bg-elev) !important;
             border: 1px solid var(--border) !important;
             color: var(--fg) !important;
         }
 
         .apexcharts-menu {
-            background: var(--ink-900) !important;
+            background: var(--bg-elev) !important;
             border: 1px solid var(--border) !important;
         }
 
         .apexcharts-menu-item:hover {
             background: var(--bg-muted) !important;
+        }
+
+        .apexcharts-legend-text {
+            color: var(--fg) !important;
         }
 
 
@@ -473,12 +583,54 @@
         }
 
         footer a {
-            color: var(--hb-teal);
+            color: var(--primary);
             text-decoration: none;
         }
 
         footer a:hover {
             text-decoration: underline;
+        }
+
+        /* Mobile */
+        @media (max-width: 640px) {
+            .container {
+                padding: 12px;
+            }
+
+            header {
+                padding: 24px 0 20px;
+                text-align: left;
+            }
+
+            .header-actions {
+                top: 24px;
+                right: 12px;
+            }
+
+            .chart-container {
+                padding: 16px;
+            }
+
+            .exchange-table th,
+            .exchange-table td {
+                padding: 10px 10px;
+            }
+
+            .exchange-table {
+                min-width: 460px;
+            }
+
+            .bar-track {
+                width: 80px;
+            }
+
+            .bar-container {
+                gap: 8px;
+            }
+
+            .bar-container span {
+                min-width: 40px;
+            }
         }
     </style>
 </head>
@@ -487,6 +639,18 @@
         <header>
             <h1>Hummingbot Reported Volumes</h1>
             <p id="date-range">Loading data...</p>
+            <div class="header-actions">
+                <a href="https://github.com/hummingbot/datadog" target="_blank" rel="noopener"
+                   class="icon-btn" aria-label="View source on GitHub">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 .5C5.73.5.7 5.52.7 11.8c0 5.02 3.25 9.27 7.76 10.78.57.1.78-.25.78-.55 0-.27-.01-1.17-.02-2.12-3.16.69-3.83-1.34-3.83-1.34-.52-1.33-1.26-1.68-1.26-1.68-1.03-.7.08-.68.08-.68 1.14.08 1.74 1.17 1.74 1.17 1.01 1.73 2.66 1.23 3.31.94.1-.73.4-1.23.72-1.51-2.52-.29-5.17-1.26-5.17-5.6 0-1.24.44-2.25 1.17-3.04-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.14 1.16.91-.25 1.88-.38 2.85-.38.97 0 1.94.13 2.85.38 2.18-1.47 3.14-1.16 3.14-1.16.62 1.57.23 2.73.11 3.02.73.79 1.17 1.8 1.17 3.04 0 4.35-2.66 5.31-5.19 5.59.41.35.77 1.04.77 2.11 0 1.52-.01 2.75-.01 3.12 0 .3.2.66.79.55 4.5-1.51 7.75-5.77 7.75-10.78C23.3 5.52 18.27.5 12 .5z"/>
+                    </svg>
+                </a>
+                <button type="button" class="icon-btn theme-toggle" id="theme-toggle" aria-label="Toggle color theme">
+                    <i class="icon-sun" data-lucide="sun"></i>
+                    <i class="icon-moon" data-lucide="moon"></i>
+                </button>
+            </div>
         </header>
 
         <div class="filters">
@@ -497,7 +661,7 @@
                     <option value="30">Last 30 Days</option>
                     <option value="90">Last 90 Days</option>
                     <option value="180">Last 6 Months</option>
-                    <option value="365">Last Year</option>
+                    <option value="365" selected>Last Year</option>
                     <option value="custom">Custom Range</option>
                 </select>
             </div>
@@ -545,10 +709,10 @@
             </div>
             <div class="stat-card">
                 <h3>
-                    <i data-lucide="zap"></i>
-                    Peak Daily Volume
+                    <i data-lucide="server"></i>
+                    Unique Instances
                 </h3>
-                <div class="value" id="peak-volume">-</div>
+                <div class="value" id="unique-instances">-</div>
             </div>
             <div class="stat-card">
                 <h3>
@@ -571,37 +735,89 @@
         </div>
 
         <div class="chart-container">
+            <h2>Total Volume by Version</h2>
+            <p class="chart-hint">Top 15 versions by total volume — others aggregated</p>
+            <div id="version-chart"></div>
+        </div>
+
+        <div class="chart-container" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap:24px;">
+            <div>
+                <h2>Top Instances</h2>
+                <p class="chart-hint">Treemap of volume share — remaining instances aggregated</p>
+                <div id="instance-chart"></div>
+            </div>
+            <div>
+                <h2>Daily Active Instances</h2>
+                <p class="chart-hint">Unique instances reporting volume per day</p>
+                <div id="active-instances-chart"></div>
+            </div>
+        </div>
+
+        <div class="chart-container">
             <h2>Exchange Rankings</h2>
-            <table class="exchange-table" id="exchange-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Exchange</th>
-                        <th>Total Volume (USDT)</th>
-                        <th>Share</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="4" class="loading">Loading...</td></tr>
-                </tbody>
-            </table>
+            <div class="table-scroll">
+                <table class="exchange-table" id="exchange-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Exchange</th>
+                            <th>Total Volume (USDT)</th>
+                            <th>Share</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="4" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <footer>
-            Built with data from <a href="https://hummingbot.org" target="_blank">Hummingbot</a> —
-            The open source framework for crypto market makers
+            Data collected from anonymized, aggregated usage of <a href="https://hummingbot.org" target="_blank">Hummingbot</a>,
+            the open source framework for crypto market makers.
+            <div style="margin-top: 8px;">
+                Learn more at <a href="https://hummingbot.org/reporting/" target="_blank">hummingbot.org/reporting</a>
+            </div>
         </footer>
     </div>
 
     <script>
+        // Theme bootstrap — apply stored preference before first paint of charts
+        (function initTheme() {
+            const saved = localStorage.getItem('hb-theme');
+            if (saved === 'light' || saved === 'dark') {
+                document.documentElement.setAttribute('data-theme', saved);
+            }
+        })();
+
         // Initialize Lucide icons
         lucide.createIcons();
 
+        function cssVar(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        function setupThemeToggle() {
+            const btn = document.getElementById('theme-toggle');
+            btn.addEventListener('click', () => {
+                const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('hb-theme', next);
+                updateDashboard();
+            });
+        }
+
         let rawExchangeData = [];
+        let rawInstanceData = [];
+        let rawVersionData = [];
         let allExchanges = [];
         let selectedExchanges = new Set();
         let dailyChart = null;
         let exchangeChart = null;
+        let instanceChart = null;
+        let activeInstancesChart = null;
+        let versionChart = null;
+        let maxDataDate = null;
 
         function formatVolume(value) {
             if (value >= 1e9) return '$' + (value / 1e9).toFixed(2) + 'B';
@@ -620,10 +836,20 @@
         }
 
         async function loadData() {
-            const response = await fetch('volume_by_exchange.csv');
-            const text = await response.text();
+            const [exchangeResp, instanceResp, versionResp] = await Promise.all([
+                fetch('volume_by_exchange.csv'),
+                fetch('volume_by_instance.csv'),
+                fetch('volume_by_version.csv')
+            ]);
+            const text = await exchangeResp.text();
+            const instanceText = await instanceResp.text();
+            const versionText = await versionResp.text();
             rawExchangeData = Papa.parse(text, { header: true, dynamicTyping: true }).data
                 .filter(row => row.date && row.exchange && row.volume_usdt);
+            rawInstanceData = Papa.parse(instanceText, { header: true, dynamicTyping: true }).data
+                .filter(row => row.date && row.instance_id && row.volume_usdt);
+            rawVersionData = Papa.parse(versionText, { header: true, dynamicTyping: true }).data
+                .filter(row => row.date && row.version && row.volume_usdt);
 
             const exchangeTotals = {};
             rawExchangeData.forEach(row => {
@@ -637,6 +863,7 @@
             selectedExchanges = new Set(allExchanges);
 
             const dates = rawExchangeData.map(r => r.date).sort();
+            maxDataDate = new Date(dates[dates.length - 1]);
             document.getElementById('start-date').value = dates[0];
             document.getElementById('end-date').value = dates[dates.length - 1];
             document.getElementById('start-date').min = dates[0];
@@ -646,6 +873,7 @@
 
             setupExchangeDropdown();
             setupEventListeners();
+            setupThemeToggle();
             updateDashboard();
         }
 
@@ -654,9 +882,21 @@
             container.innerHTML = allExchanges.map(exchange => `
                 <label class="multi-select-option">
                     <input type="checkbox" value="${exchange}" checked onchange="toggleExchange('${exchange}')">
-                    ${exchange}
+                    <span class="label-text">${exchange}</span>
+                    <button type="button" class="only-btn" onclick="selectOnlyExchange(event, '${exchange}')">Only</button>
                 </label>
             `).join('');
+        }
+
+        function selectOnlyExchange(event, exchange) {
+            event.preventDefault();
+            event.stopPropagation();
+            selectedExchanges = new Set([exchange]);
+            document.querySelectorAll('#exchange-options input').forEach(cb => {
+                cb.checked = cb.value === exchange;
+            });
+            updateExchangeButton();
+            updateDashboard();
         }
 
         function setupEventListeners() {
@@ -731,14 +971,14 @@
 
             const timeRange = document.getElementById('time-range').value;
             if (timeRange !== 'all') {
-                const endDate = new Date();
+                const endDate = new Date(maxDataDate);
                 let startDate;
 
                 if (timeRange === 'custom') {
                     startDate = new Date(document.getElementById('start-date').value);
                     endDate.setTime(new Date(document.getElementById('end-date').value).getTime());
                 } else {
-                    startDate = new Date();
+                    startDate = new Date(maxDataDate);
                     startDate.setDate(startDate.getDate() - parseInt(timeRange));
                 }
 
@@ -764,12 +1004,14 @@
             const dailyValues = sortedDates.map(d => dailyTotals[d]);
 
             const totalVolume = dailyValues.reduce((a, b) => a + b, 0);
-            const peakVolume = dailyValues.length ? Math.max(...dailyValues) : 0;
             const avgVolume = dailyValues.length ? totalVolume / dailyValues.length : 0;
+
+            const instanceData = getFilteredInstanceData();
+            const uniqueInstances = new Set(instanceData.map(r => r.instance_id)).size;
 
             document.getElementById('total-volume').textContent = formatVolume(totalVolume);
             document.getElementById('total-exchanges').textContent = selectedExchanges.size;
-            document.getElementById('peak-volume').textContent = formatVolume(peakVolume);
+            document.getElementById('unique-instances').textContent = uniqueInstances.toLocaleString();
             document.getElementById('avg-volume').textContent = formatVolume(avgVolume);
 
             if (sortedDates.length > 0) {
@@ -779,7 +1021,293 @@
 
             updateDailyChart(sortedDates, dailyValues);
             updateExchangeChart(data);
+            updateVersionChart();
+            updateInstanceChart();
+            updateActiveInstancesChart();
             updateExchangeTable(data);
+        }
+
+        function getFilteredVersionData() {
+            let data = rawVersionData;
+            const timeRange = document.getElementById('time-range').value;
+            if (timeRange !== 'all') {
+                const endDate = new Date(maxDataDate);
+                let startDate;
+                if (timeRange === 'custom') {
+                    startDate = new Date(document.getElementById('start-date').value);
+                    endDate.setTime(new Date(document.getElementById('end-date').value).getTime());
+                } else {
+                    startDate = new Date(maxDataDate);
+                    startDate.setDate(startDate.getDate() - parseInt(timeRange));
+                }
+                data = data.filter(row => {
+                    const rowDate = new Date(row.date);
+                    return rowDate >= startDate && rowDate <= endDate;
+                });
+            }
+            return data;
+        }
+
+        function updateVersionChart() {
+            const data = getFilteredVersionData();
+            const versionTotals = {};
+            data.forEach(row => {
+                if (!versionTotals[row.version]) versionTotals[row.version] = 0;
+                versionTotals[row.version] += row.volume_usdt;
+            });
+
+            const sorted = Object.entries(versionTotals).sort((a, b) => b[1] - a[1]);
+            const topN = 15;
+            const top = sorted.slice(0, topN);
+            const rest = sorted.slice(topN);
+            const restTotal = rest.reduce((s, [, v]) => s + v, 0);
+
+            const labels = top.map(([v]) => v);
+            const values = top.map(([, v]) => v);
+            if (rest.length > 0) {
+                labels.push(`${rest.length} other versions`);
+                values.push(restTotal);
+            }
+            const grandTotal = values.reduce((a, b) => a + b, 0);
+
+            const theme = document.documentElement.getAttribute('data-theme');
+            const mutedSlice = theme === 'light' ? '#cbd5e1' : '#3f3f46';
+            const options = {
+                series: values,
+                labels: labels,
+                chart: {
+                    type: 'donut',
+                    height: 480,
+                    background: 'transparent',
+                    fontFamily: 'JetBrains Mono, monospace'
+                },
+                colors: labels.map((_, i) =>
+                    i === labels.length - 1 && rest.length > 0 ? mutedSlice : getColorForIndex(i)
+                ),
+                stroke: { colors: [cssVar('--bg-elev')], width: 2 },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        if (val < 3) return '';
+                        return opts.w.globals.labels[opts.seriesIndex];
+                    },
+                    style: {
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        colors: ['#0f172a']
+                    },
+                    dropShadow: { enabled: false }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '60%',
+                            labels: {
+                                show: true,
+                                name: {
+                                    show: true,
+                                    fontFamily: 'JetBrains Mono',
+                                    fontSize: '0.75rem',
+                                    color: cssVar('--fg-muted')
+                                },
+                                value: {
+                                    show: true,
+                                    fontFamily: 'JetBrains Mono',
+                                    fontSize: '1.5rem',
+                                    fontWeight: 600,
+                                    color: cssVar('--fg'),
+                                    formatter: (val) => formatVolume(Number(val))
+                                },
+                                total: {
+                                    show: true,
+                                    showAlways: true,
+                                    label: 'Total',
+                                    fontFamily: 'JetBrains Mono',
+                                    fontSize: '0.75rem',
+                                    color: cssVar('--fg-muted'),
+                                    formatter: () => formatVolume(grandTotal)
+                                }
+                            }
+                        }
+                    }
+                },
+                legend: {
+                    position: 'right',
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: '12px',
+                    labels: { colors: cssVar('--fg') },
+                    markers: { width: 10, height: 10, radius: 2 },
+                    itemMargin: { vertical: 2 },
+                    formatter: (seriesName, opts) => {
+                        const val = opts.w.globals.series[opts.seriesIndex];
+                        return `${seriesName} — ${formatVolume(val)}`;
+                    }
+                },
+                tooltip: { theme: theme, y: { formatter: (val) => formatVolume(val) } }
+            };
+
+            if (versionChart) {
+                versionChart.destroy();
+            }
+            versionChart = new ApexCharts(document.getElementById('version-chart'), options);
+            versionChart.render();
+        }
+
+        function getFilteredInstanceData() {
+            let data = rawInstanceData;
+            const timeRange = document.getElementById('time-range').value;
+            if (timeRange !== 'all') {
+                const endDate = new Date(maxDataDate);
+                let startDate;
+                if (timeRange === 'custom') {
+                    startDate = new Date(document.getElementById('start-date').value);
+                    endDate.setTime(new Date(document.getElementById('end-date').value).getTime());
+                } else {
+                    startDate = new Date(maxDataDate);
+                    startDate.setDate(startDate.getDate() - parseInt(timeRange));
+                }
+                data = data.filter(row => {
+                    const rowDate = new Date(row.date);
+                    return rowDate >= startDate && rowDate <= endDate;
+                });
+            }
+            return data;
+        }
+
+        function updateInstanceChart() {
+            const data = getFilteredInstanceData();
+            const instanceTotals = {};
+            data.forEach(row => {
+                if (!instanceTotals[row.instance_id]) instanceTotals[row.instance_id] = 0;
+                instanceTotals[row.instance_id] += row.volume_usdt;
+            });
+
+            const sorted = Object.entries(instanceTotals).sort((a, b) => b[1] - a[1]);
+            const topN = 30;
+            const top = sorted.slice(0, topN);
+            const rest = sorted.slice(topN);
+            const restTotal = rest.reduce((s, [, v]) => s + v, 0);
+
+            const treemapData = top.map(([id, vol]) => ({
+                x: id.length > 14 ? id.substring(0, 12) + '…' : id,
+                y: vol,
+                fullId: id
+            }));
+            if (rest.length > 0) {
+                treemapData.push({
+                    x: `${rest.length} other instance_ids`,
+                    y: restTotal,
+                    fullId: `${rest.length} other instance_ids`
+                });
+            }
+
+            const theme = document.documentElement.getAttribute('data-theme');
+            const mutedTileColor = theme === 'light' ? '#cbd5e1' : '#3f3f46';
+            const tileLabelColor = '#0f172a';
+            const tooltipMuted = cssVar('--fg-muted');
+            const tooltipAccent = cssVar('--primary');
+            const options = {
+                series: [{ data: treemapData }],
+                chart: {
+                    type: 'treemap',
+                    height: 420,
+                    background: 'transparent',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    toolbar: { show: true }
+                },
+                colors: treemapData.map((_, i) =>
+                    i === treemapData.length - 1 && rest.length > 0 ? mutedTileColor : getColorForIndex(i)
+                ),
+                plotOptions: { treemap: { distributed: true, enableShades: false } },
+                dataLabels: {
+                    enabled: true,
+                    style: {
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        colors: [tileLabelColor]
+                    },
+                    formatter: function(text, op) {
+                        return [text, formatVolume(op.value)];
+                    },
+                    offsetY: -4
+                },
+                tooltip: {
+                    theme: theme,
+                    custom: function({ seriesIndex, dataPointIndex, w }) {
+                        const point = w.config.series[seriesIndex].data[dataPointIndex];
+                        return `<div style="padding:8px 12px;">
+                            <div style="font-size:0.7rem;color:${tooltipMuted};margin-bottom:4px;">Instance</div>
+                            <div style="font-size:0.75rem;margin-bottom:6px;word-break:break-all;max-width:360px;">${point.fullId}</div>
+                            <div style="color:${tooltipAccent};font-weight:500;">${formatVolume(point.y)}</div>
+                        </div>`;
+                    }
+                },
+                legend: { show: false }
+            };
+
+            if (instanceChart) {
+                instanceChart.destroy();
+            }
+            instanceChart = new ApexCharts(document.getElementById('instance-chart'), options);
+            instanceChart.render();
+        }
+
+        function updateActiveInstancesChart() {
+            const data = getFilteredInstanceData();
+            const perDay = {};
+            data.forEach(row => {
+                if (!perDay[row.date]) perDay[row.date] = new Set();
+                perDay[row.date].add(row.instance_id);
+            });
+
+            const sortedDates = Object.keys(perDay).sort();
+            const counts = sortedDates.map(d => ({
+                x: new Date(d).getTime(),
+                y: perDay[d].size
+            }));
+
+            const theme = document.documentElement.getAttribute('data-theme');
+            const options = {
+                series: [{ name: 'Active Instances', data: counts }],
+                chart: {
+                    type: 'bar',
+                    height: 420,
+                    background: 'transparent',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    toolbar: { show: true }
+                },
+                colors: [cssVar('--accent')],
+                plotOptions: { bar: { columnWidth: '80%', borderRadius: 1 } },
+                dataLabels: { enabled: false },
+                xaxis: {
+                    type: 'datetime',
+                    labels: {
+                        style: { colors: cssVar('--fg-muted'), fontFamily: 'JetBrains Mono' },
+                        datetimeFormatter: { month: "MMM 'yy" }
+                    },
+                    axisBorder: { color: cssVar('--border') },
+                    axisTicks: { color: cssVar('--border') }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: cssVar('--fg-muted'), fontFamily: 'JetBrains Mono' },
+                        formatter: (val) => Math.round(val).toLocaleString()
+                    }
+                },
+                grid: { borderColor: cssVar('--border'), strokeDashArray: 3 },
+                tooltip: {
+                    theme: theme,
+                    x: { format: 'MMM dd, yyyy' },
+                    y: { formatter: (val) => `${val.toLocaleString()} instances` }
+                },
+                legend: { show: false }
+            };
+
+            if (activeInstancesChart) activeInstancesChart.destroy();
+            activeInstancesChart = new ApexCharts(document.getElementById('active-instances-chart'), options);
+            activeInstancesChart.render();
         }
 
         function updateDailyChart(dates, values) {
@@ -788,11 +1316,9 @@
                 y: values[i]
             }));
 
+            const theme = document.documentElement.getAttribute('data-theme');
             const options = {
-                series: [{
-                    name: 'Daily Volume',
-                    data: chartData
-                }],
+                series: [{ name: 'Daily Volume', data: chartData }],
                 chart: {
                     type: 'area',
                     height: 350,
@@ -800,59 +1326,43 @@
                     fontFamily: 'JetBrains Mono, monospace',
                     toolbar: {
                         show: true,
-                        tools: {
-                            download: true,
-                            selection: true,
-                            zoom: true,
-                            zoomin: true,
-                            zoomout: true,
-                            pan: true,
-                            reset: true
-                        }
+                        tools: { download: true, selection: true, zoom: true, zoomin: true, zoomout: true, pan: true, reset: true }
                     },
                     animations: { enabled: true, speed: 300 }
                 },
-                colors: ['#5FFFD7'],
+                colors: [cssVar('--primary')],
                 fill: {
                     type: 'gradient',
-                    gradient: {
-                        shadeIntensity: 1,
-                        opacityFrom: 0.5,
-                        opacityTo: 0.05,
-                        stops: [0, 100]
-                    }
+                    gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.05, stops: [0, 100] }
                 },
                 dataLabels: { enabled: false },
                 stroke: { curve: 'smooth', width: 2 },
                 xaxis: {
                     type: 'datetime',
                     labels: {
-                        style: { colors: '#a1a1aa', fontFamily: 'JetBrains Mono' },
+                        style: { colors: cssVar('--fg-muted'), fontFamily: 'JetBrains Mono' },
                         datetimeFormatter: { month: "MMM 'yy" }
                     },
-                    axisBorder: { color: '#2f2f2f' },
-                    axisTicks: { color: '#2f2f2f' }
+                    axisBorder: { color: cssVar('--border') },
+                    axisTicks: { color: cssVar('--border') }
                 },
                 yaxis: {
                     labels: {
-                        style: { colors: '#a1a1aa', fontFamily: 'JetBrains Mono' },
+                        style: { colors: cssVar('--fg-muted'), fontFamily: 'JetBrains Mono' },
                         formatter: (val) => formatVolume(val)
                     }
                 },
-                grid: { borderColor: '#2f2f2f', strokeDashArray: 3 },
+                grid: { borderColor: cssVar('--border'), strokeDashArray: 3 },
                 tooltip: {
-                    theme: 'dark',
+                    theme: theme,
                     x: { format: 'MMM dd, yyyy' },
                     y: { formatter: (val) => formatVolume(val) }
                 }
             };
 
-            if (dailyChart) {
-                dailyChart.updateOptions(options);
-            } else {
-                dailyChart = new ApexCharts(document.getElementById('daily-volume-chart'), options);
-                dailyChart.render();
-            }
+            if (dailyChart) dailyChart.destroy();
+            dailyChart = new ApexCharts(document.getElementById('daily-volume-chart'), options);
+            dailyChart.render();
         }
 
         function updateExchangeChart(data) {
@@ -866,11 +1376,9 @@
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 15);
 
+            const theme = document.documentElement.getAttribute('data-theme');
             const options = {
-                series: [{
-                    name: 'Volume',
-                    data: sorted.map(([, vol]) => vol)
-                }],
+                series: [{ name: 'Volume', data: sorted.map(([, vol]) => vol) }],
                 chart: {
                     type: 'bar',
                     height: 420,
@@ -879,50 +1387,33 @@
                     toolbar: { show: true }
                 },
                 plotOptions: {
-                    bar: {
-                        horizontal: true,
-                        borderRadius: 4,
-                        distributed: true,
-                        barHeight: '70%'
-                    }
+                    bar: { horizontal: true, borderRadius: 4, distributed: true, barHeight: '70%' }
                 },
                 colors: sorted.map((_, i) => getColorForIndex(i)),
                 dataLabels: {
                     enabled: true,
                     formatter: (val) => formatVolume(val),
-                    style: {
-                        colors: ['#f5f7fa'],
-                        fontFamily: 'JetBrains Mono',
-                        fontWeight: 500
-                    },
+                    style: { colors: ['#0f172a'], fontFamily: 'JetBrains Mono', fontWeight: 600 },
                     offsetX: 8
                 },
                 xaxis: {
                     categories: sorted.map(([name]) => name),
                     labels: {
-                        style: { colors: '#a1a1aa', fontFamily: 'JetBrains Mono' },
+                        style: { colors: cssVar('--fg-muted'), fontFamily: 'JetBrains Mono' },
                         formatter: (val) => formatVolume(val)
                     }
                 },
                 yaxis: {
-                    labels: {
-                        style: { colors: '#f5f7fa', fontFamily: 'JetBrains Mono' }
-                    }
+                    labels: { style: { colors: cssVar('--fg'), fontFamily: 'JetBrains Mono' } }
                 },
-                grid: { borderColor: '#2f2f2f', strokeDashArray: 3 },
-                tooltip: {
-                    theme: 'dark',
-                    y: { formatter: (val) => formatVolume(val) }
-                },
+                grid: { borderColor: cssVar('--border'), strokeDashArray: 3 },
+                tooltip: { theme: theme, y: { formatter: (val) => formatVolume(val) } },
                 legend: { show: false }
             };
 
-            if (exchangeChart) {
-                exchangeChart.updateOptions(options);
-            } else {
-                exchangeChart = new ApexCharts(document.getElementById('exchange-chart'), options);
-                exchangeChart.render();
-            }
+            if (exchangeChart) exchangeChart.destroy();
+            exchangeChart = new ApexCharts(document.getElementById('exchange-chart'), options);
+            exchangeChart.render();
         }
 
         function updateExchangeTable(data) {
@@ -949,7 +1440,7 @@
                     <td class="volume">${formatVolume(volume)}</td>
                     <td>
                         <div class="bar-container">
-                            <div class="bar" style="width: ${(volume / maxVolume) * 150}px"></div>
+                            <div class="bar-track"><div class="bar" style="width: ${(volume / maxVolume) * 100}%"></div></div>
                             <span>${((volume / grandTotal) * 100).toFixed(1)}%</span>
                         </div>
                     </td>

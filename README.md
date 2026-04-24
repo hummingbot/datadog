@@ -43,6 +43,9 @@ config anonymized_metrics_enabled False
 | `total_daily_volume.csv` | Daily aggregated volume across all exchanges |
 | `volume_by_exchange.csv` | Daily volume broken down by exchange connector |
 | `volume_by_version.csv` | Daily volume broken down by Hummingbot version |
+| `volume_by_instance.csv` | Daily volume broken down by anonymized instance UUID |
+
+> **Note:** Data collection ended on **2026-03-16**. Time range filters (e.g. "Last Year") are anchored to this last available data date, not today's date.
 
 ## Refreshing Data
 
