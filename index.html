@@ -598,13 +598,30 @@
             }
 
             header {
-                padding: 24px 0 20px;
+                padding: 16px 0 20px;
                 text-align: left;
+                display: flex;
+                flex-direction: column;
+            }
+
+            header h1 {
+                order: 2;
+            }
+
+            header p {
+                order: 3;
             }
 
             .header-actions {
-                top: 24px;
-                right: 12px;
+                position: static;
+                order: 1;
+                margin-left: auto;
+                margin-bottom: 12px;
+            }
+
+            .icon-btn {
+                width: 36px;
+                height: 36px;
             }
 
             .chart-container {
@@ -703,9 +720,9 @@
             <div class="stat-card">
                 <h3>
                     <i data-lucide="layers"></i>
-                    Selected Exchanges
+                    Unique Exchanges
                 </h3>
-                <div class="value" id="total-exchanges">-</div>
+                <div class="value" id="unique-exchanges">-</div>
             </div>
             <div class="stat-card">
                 <h3>
@@ -730,7 +747,7 @@
         </div>
 
         <div class="chart-container">
-            <h2>Volume by Exchange</h2>
+            <h2>Volume by Exchange Connector</h2>
             <div id="exchange-chart"></div>
         </div>
 
@@ -1006,11 +1023,12 @@
             const totalVolume = dailyValues.reduce((a, b) => a + b, 0);
             const avgVolume = dailyValues.length ? totalVolume / dailyValues.length : 0;
 
+            const uniqueExchanges = new Set(data.map(r => r.exchange)).size;
             const instanceData = getFilteredInstanceData();
             const uniqueInstances = new Set(instanceData.map(r => r.instance_id)).size;
 
             document.getElementById('total-volume').textContent = formatVolume(totalVolume);
-            document.getElementById('total-exchanges').textContent = selectedExchanges.size;
+            document.getElementById('unique-exchanges').textContent = uniqueExchanges.toLocaleString();
             document.getElementById('unique-instances').textContent = uniqueInstances.toLocaleString();
             document.getElementById('avg-volume').textContent = formatVolume(avgVolume);
 

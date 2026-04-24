@@ -14,6 +14,3 @@ playwright-report/
 
 # Environment
 .env
-
-# Large data files (regenerate with export_data.py)
-volume_by_instance.csv
