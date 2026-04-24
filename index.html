@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hummingbot Reported Volumes</title>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <!-- Hummingbot Design System Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* =========================================================
+           Hummingbot Design System Tokens
+           ========================================================= */
+        :root {
+            /* Signature brand accents */
+            --hb-teal: #5FFFD7;
+            --hb-yellow: #FCDB17;
+            --hb-magenta: #E549FF;
+            --hb-cyan: #00C2CE;
+            --hb-orange: #EF8728;
+
+            /* Trading semantics */
+            --bull: #22c55e;
+            --bear: #ef4444;
+
+            /* Neutrals */
+            --ink-0: #ffffff;
+            --ink-50: #fafafa;
+            --ink-200: #e5e7eb;
+            --ink-400: #a1a1aa;
+            --ink-600: #52525b;
+            --ink-700: #3f3f46;
+            --ink-800: #2f2f2f;
+            --ink-850: #1f1f22;
+            --ink-900: #1a1a1b;
+            --ink-950: #0f0f0f;
+
+            /* Semantic - Dark theme */
+            --bg: var(--ink-900);
+            --bg-elev: #151819;
+            --bg-muted: #222326;
+            --fg: #f5f7fa;
+            --fg-muted: #a1a1aa;
+            --border: #2f2f2f;
+            --primary: var(--hb-teal);
+            --secondary: var(--hb-yellow);
+            --accent: var(--hb-magenta);
+
+            /* Type */
+            --font-display: "JetBrains Mono", ui-monospace, monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+            /* Radii */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-full: 9999px;
+
+            /* Shadows */
+            --shadow-xs: 0 1px 2px -1px rgba(0,0,0,.05), 0 1px 3px 0 rgba(0,0,0,.05);
+            --shadow-glow-teal: 0 0 24px rgba(95,255,215,.35);
+            --shadow-glow-yellow: 0 0 24px rgba(252,219,23,.35);
+            --shadow-glow-magenta: 0 0 24px rgba(229,73,255,.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--fg);
+            position: relative;
+        }
+
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Frosted glass header */
+        header {
+            text-align: center;
+            padding: 40px 0 30px;
+            position: relative;
+        }
+
+        header h1 {
+            font-family: var(--font-display);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: var(--fg);
+        }
+
+        header p {
+            font-family: var(--font-mono);
+            color: var(--fg-muted);
+            margin-top: 8px;
+            font-size: 0.875rem;
+        }
+
+        /* Filters - frosted glass */
+        .filters {
+            background: rgba(21, 24, 25, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+            position: relative;
+            z-index: 100;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-family: var(--font-mono);
+            color: var(--fg-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 8px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-muted);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--fg);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.15s ease;
+        }
+
+        .filter-group select:hover,
+        .filter-group input:hover {
+            border-color: var(--hb-teal);
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: var(--hb-teal);
+            box-shadow: 0 0 0 2px rgba(95, 255, 215, 0.15);
+        }
+
+        .filter-group select option {
+            background: var(--ink-900);
+            color: var(--fg);
+        }
+
+        /* Multi-select dropdown */
+        .multi-select {
+            position: relative;
+        }
+
+        .multi-select-button {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-muted);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--fg);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.15s ease;
+        }
+
+        .multi-select-button:hover {
+            border-color: var(--hb-teal);
+        }
+
+        .multi-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--ink-900);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            margin-top: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .multi-select-dropdown.open {
+            display: block;
+        }
+
+        .multi-select-search {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-muted);
+            border: none;
+            border-bottom: 1px solid var(--border);
+            color: var(--fg);
+            font-family: var(--font-mono);
+            font-size: 14px;
+        }
+
+        .multi-select-search:focus {
+            outline: none;
+            background: var(--ink-850);
+        }
+
+        .multi-select-option {
+            padding: 10px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            transition: background 0.15s ease;
+        }
+
+        .multi-select-option:hover {
+            background: var(--bg-muted);
+        }
+
+        .multi-select-option input {
+            width: auto;
+            cursor: pointer;
+            accent-color: var(--hb-teal);
+        }
+
+        .multi-select-actions {
+            padding: 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .multi-select-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .btn-select-all {
+            background: rgba(95, 255, 215, 0.15);
+            color: var(--hb-teal);
+            border: 1px solid rgba(95, 255, 215, 0.3);
+        }
+
+        .btn-select-all:hover {
+            background: rgba(95, 255, 215, 0.25);
+        }
+
+        .btn-clear-all {
+            background: var(--bg-muted);
+            color: var(--fg-muted);
+        }
+
+        .btn-clear-all:hover {
+            background: var(--ink-700);
+        }
+
+        /* Stats grid - metric cards with glow */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-elev);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: border-color 0.15s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--ink-700);
+        }
+
+        .stat-card h3 {
+            font-family: var(--font-mono);
+            color: var(--fg-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-card .value {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-top: 8px;
+            color: var(--fg);
+            letter-spacing: -0.02em;
+        }
+
+        /* Chart containers */
+        .chart-container {
+            background: var(--bg-elev);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .chart-container h2 {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+            color: var(--fg);
+        }
+
+        .chart-hint {
+            font-family: var(--font-mono);
+            color: var(--fg-muted);
+            font-size: 0.75rem;
+            margin-bottom: 16px;
+        }
+
+        /* Exchange table */
+        .exchange-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .exchange-table th,
+        .exchange-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .exchange-table th {
+            font-family: var(--font-mono);
+            color: var(--fg-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.12em;
+        }
+
+        .exchange-table tr {
+            transition: background 0.15s ease;
+        }
+
+        .exchange-table tr:hover {
+            background: var(--bg-muted);
+        }
+
+        .exchange-table td {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+        }
+
+        .exchange-table .volume {
+            color: var(--hb-teal);
+            font-weight: 500;
+        }
+
+        .bar-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bar {
+            height: 6px;
+            background: linear-gradient(90deg, var(--hb-teal), var(--hb-cyan));
+            border-radius: var(--radius-full);
+        }
+
+        .bar-container span {
+            color: var(--fg-muted);
+            font-size: 0.75rem;
+            min-width: 45px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--fg-muted);
+            font-family: var(--font-mono);
+        }
+
+        /* ApexCharts overrides */
+        .apexcharts-tooltip {
+            background: var(--ink-900) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--fg) !important;
+            font-family: var(--font-mono) !important;
+            border-radius: var(--radius-md) !important;
+        }
+
+        .apexcharts-tooltip-title {
+            background: var(--bg-muted) !important;
+            border-bottom: 1px solid var(--border) !important;
+            font-family: var(--font-mono) !important;
+        }
+
+        .apexcharts-xaxistooltip {
+            background: var(--ink-900) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--fg) !important;
+        }
+
+        .apexcharts-menu {
+            background: var(--ink-900) !important;
+            border: 1px solid var(--border) !important;
+        }
+
+        .apexcharts-menu-item:hover {
+            background: var(--bg-muted) !important;
+        }
+
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--fg-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        footer a {
+            color: var(--hb-teal);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Hummingbot Reported Volumes</h1>
+            <p id="date-range">Loading data...</p>
+        </header>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>Time Range</label>
+                <select id="time-range">
+                    <option value="all">All Time</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="180">Last 6 Months</option>
+                    <option value="365">Last Year</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            <div class="filter-group" id="start-date-group" style="display:none;">
+                <label>Start Date</label>
+                <input type="date" id="start-date">
+            </div>
+            <div class="filter-group" id="end-date-group" style="display:none;">
+                <label>End Date</label>
+                <input type="date" id="end-date">
+            </div>
+            <div class="filter-group">
+                <label>Exchanges</label>
+                <div class="multi-select" id="exchange-multi-select">
+                    <button class="multi-select-button" id="exchange-button">
+                        <span>All Exchanges</span>
+                        <span>▼</span>
+                    </button>
+                    <div class="multi-select-dropdown" id="exchange-dropdown">
+                        <input type="text" class="multi-select-search" placeholder="Search exchanges..." id="exchange-search">
+                        <div id="exchange-options"></div>
+                        <div class="multi-select-actions">
+                            <button class="btn-select-all" onclick="selectAllExchanges()">Select All</button>
+                            <button class="btn-clear-all" onclick="clearAllExchanges()">Clear All</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>
+                    <i data-lucide="trending-up"></i>
+                    Total Volume
+                </h3>
+                <div class="value" id="total-volume">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>
+                    <i data-lucide="layers"></i>
+                    Selected Exchanges
+                </h3>
+                <div class="value" id="total-exchanges">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>
+                    <i data-lucide="zap"></i>
+                    Peak Daily Volume
+                </h3>
+                <div class="value" id="peak-volume">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>
+                    <i data-lucide="bar-chart-2"></i>
+                    Avg Daily Volume
+                </h3>
+                <div class="value" id="avg-volume">-</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2>Daily Volume</h2>
+            <p class="chart-hint">Drag to zoom, double-click to reset</p>
+            <div id="daily-volume-chart"></div>
+        </div>
+
+        <div class="chart-container">
+            <h2>Volume by Exchange</h2>
+            <div id="exchange-chart"></div>
+        </div>
+
+        <div class="chart-container">
+            <h2>Exchange Rankings</h2>
+            <table class="exchange-table" id="exchange-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Exchange</th>
+                        <th>Total Volume (USDT)</th>
+                        <th>Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4" class="loading">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            Built with data from <a href="https://hummingbot.org" target="_blank">Hummingbot</a> —
+            The open source framework for crypto market makers
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        let rawExchangeData = [];
+        let allExchanges = [];
+        let selectedExchanges = new Set();
+        let dailyChart = null;
+        let exchangeChart = null;
+
+        function formatVolume(value) {
+            if (value >= 1e9) return '$' + (value / 1e9).toFixed(2) + 'B';
+            if (value >= 1e6) return '$' + (value / 1e6).toFixed(2) + 'M';
+            if (value >= 1e3) return '$' + (value / 1e3).toFixed(2) + 'K';
+            return '$' + value.toFixed(2);
+        }
+
+        function getColorForIndex(index) {
+            const colors = [
+                '#5FFFD7', '#FCDB17', '#E549FF', '#00C2CE', '#22c55e',
+                '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899',
+                '#14b8a6', '#f97316', '#06b6d4', '#84cc16', '#a855f7'
+            ];
+            return colors[index % colors.length];
+        }
+
+        async function loadData() {
+            const response = await fetch('volume_by_exchange.csv');
+            const text = await response.text();
+            rawExchangeData = Papa.parse(text, { header: true, dynamicTyping: true }).data
+                .filter(row => row.date && row.exchange && row.volume_usdt);
+
+            const exchangeTotals = {};
+            rawExchangeData.forEach(row => {
+                if (!exchangeTotals[row.exchange]) exchangeTotals[row.exchange] = 0;
+                exchangeTotals[row.exchange] += row.volume_usdt;
+            });
+            allExchanges = Object.entries(exchangeTotals)
+                .sort((a, b) => b[1] - a[1])
+                .map(([name]) => name);
+
+            selectedExchanges = new Set(allExchanges);
+
+            const dates = rawExchangeData.map(r => r.date).sort();
+            document.getElementById('start-date').value = dates[0];
+            document.getElementById('end-date').value = dates[dates.length - 1];
+            document.getElementById('start-date').min = dates[0];
+            document.getElementById('start-date').max = dates[dates.length - 1];
+            document.getElementById('end-date').min = dates[0];
+            document.getElementById('end-date').max = dates[dates.length - 1];
+
+            setupExchangeDropdown();
+            setupEventListeners();
+            updateDashboard();
+        }
+
+        function setupExchangeDropdown() {
+            const container = document.getElementById('exchange-options');
+            container.innerHTML = allExchanges.map(exchange => `
+                <label class="multi-select-option">
+                    <input type="checkbox" value="${exchange}" checked onchange="toggleExchange('${exchange}')">
+                    ${exchange}
+                </label>
+            `).join('');
+        }
+
+        function setupEventListeners() {
+            document.getElementById('exchange-button').addEventListener('click', () => {
+                document.getElementById('exchange-dropdown').classList.toggle('open');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#exchange-multi-select')) {
+                    document.getElementById('exchange-dropdown').classList.remove('open');
+                }
+            });
+
+            document.getElementById('exchange-search').addEventListener('input', (e) => {
+                const search = e.target.value.toLowerCase();
+                document.querySelectorAll('.multi-select-option').forEach(opt => {
+                    const text = opt.textContent.toLowerCase();
+                    opt.style.display = text.includes(search) ? 'flex' : 'none';
+                });
+            });
+
+            document.getElementById('time-range').addEventListener('change', (e) => {
+                const isCustom = e.target.value === 'custom';
+                document.getElementById('start-date-group').style.display = isCustom ? 'block' : 'none';
+                document.getElementById('end-date-group').style.display = isCustom ? 'block' : 'none';
+                updateDashboard();
+            });
+
+            document.getElementById('start-date').addEventListener('change', updateDashboard);
+            document.getElementById('end-date').addEventListener('change', updateDashboard);
+        }
+
+        function toggleExchange(exchange) {
+            if (selectedExchanges.has(exchange)) {
+                selectedExchanges.delete(exchange);
+            } else {
+                selectedExchanges.add(exchange);
+            }
+            updateExchangeButton();
+            updateDashboard();
+        }
+
+        function selectAllExchanges() {
+            selectedExchanges = new Set(allExchanges);
+            document.querySelectorAll('#exchange-options input').forEach(cb => cb.checked = true);
+            updateExchangeButton();
+            updateDashboard();
+        }
+
+        function clearAllExchanges() {
+            selectedExchanges.clear();
+            document.querySelectorAll('#exchange-options input').forEach(cb => cb.checked = false);
+            updateExchangeButton();
+            updateDashboard();
+        }
+
+        function updateExchangeButton() {
+            const btn = document.getElementById('exchange-button').querySelector('span');
+            if (selectedExchanges.size === 0) {
+                btn.textContent = 'No exchanges selected';
+            } else if (selectedExchanges.size === allExchanges.length) {
+                btn.textContent = 'All Exchanges';
+            } else if (selectedExchanges.size <= 3) {
+                btn.textContent = [...selectedExchanges].join(', ');
+            } else {
+                btn.textContent = `${selectedExchanges.size} exchanges selected`;
+            }
+        }
+
+        function getFilteredData() {
+            let data = rawExchangeData.filter(row => selectedExchanges.has(row.exchange));
+
+            const timeRange = document.getElementById('time-range').value;
+            if (timeRange !== 'all') {
+                const endDate = new Date();
+                let startDate;
+
+                if (timeRange === 'custom') {
+                    startDate = new Date(document.getElementById('start-date').value);
+                    endDate.setTime(new Date(document.getElementById('end-date').value).getTime());
+                } else {
+                    startDate = new Date();
+                    startDate.setDate(startDate.getDate() - parseInt(timeRange));
+                }
+
+                data = data.filter(row => {
+                    const rowDate = new Date(row.date);
+                    return rowDate >= startDate && rowDate <= endDate;
+                });
+            }
+
+            return data;
+        }
+
+        function updateDashboard() {
+            const data = getFilteredData();
+
+            const dailyTotals = {};
+            data.forEach(row => {
+                if (!dailyTotals[row.date]) dailyTotals[row.date] = 0;
+                dailyTotals[row.date] += row.volume_usdt;
+            });
+
+            const sortedDates = Object.keys(dailyTotals).sort();
+            const dailyValues = sortedDates.map(d => dailyTotals[d]);
+
+            const totalVolume = dailyValues.reduce((a, b) => a + b, 0);
+            const peakVolume = dailyValues.length ? Math.max(...dailyValues) : 0;
+            const avgVolume = dailyValues.length ? totalVolume / dailyValues.length : 0;
+
+            document.getElementById('total-volume').textContent = formatVolume(totalVolume);
+            document.getElementById('total-exchanges').textContent = selectedExchanges.size;
+            document.getElementById('peak-volume').textContent = formatVolume(peakVolume);
+            document.getElementById('avg-volume').textContent = formatVolume(avgVolume);
+
+            if (sortedDates.length > 0) {
+                document.getElementById('date-range').textContent =
+                    `${sortedDates[0]} → ${sortedDates[sortedDates.length - 1]}`;
+            }
+
+            updateDailyChart(sortedDates, dailyValues);
+            updateExchangeChart(data);
+            updateExchangeTable(data);
+        }
+
+        function updateDailyChart(dates, values) {
+            const chartData = dates.map((date, i) => ({
+                x: new Date(date).getTime(),
+                y: values[i]
+            }));
+
+            const options = {
+                series: [{
+                    name: 'Daily Volume',
+                    data: chartData
+                }],
+                chart: {
+                    type: 'area',
+                    height: 350,
+                    background: 'transparent',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    toolbar: {
+                        show: true,
+                        tools: {
+                            download: true,
+                            selection: true,
+                            zoom: true,
+                            zoomin: true,
+                            zoomout: true,
+                            pan: true,
+                            reset: true
+                        }
+                    },
+                    animations: { enabled: true, speed: 300 }
+                },
+                colors: ['#5FFFD7'],
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.5,
+                        opacityTo: 0.05,
+                        stops: [0, 100]
+                    }
+                },
+                dataLabels: { enabled: false },
+                stroke: { curve: 'smooth', width: 2 },
+                xaxis: {
+                    type: 'datetime',
+                    labels: {
+                        style: { colors: '#a1a1aa', fontFamily: 'JetBrains Mono' },
+                        datetimeFormatter: { month: "MMM 'yy" }
+                    },
+                    axisBorder: { color: '#2f2f2f' },
+                    axisTicks: { color: '#2f2f2f' }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: '#a1a1aa', fontFamily: 'JetBrains Mono' },
+                        formatter: (val) => formatVolume(val)
+                    }
+                },
+                grid: { borderColor: '#2f2f2f', strokeDashArray: 3 },
+                tooltip: {
+                    theme: 'dark',
+                    x: { format: 'MMM dd, yyyy' },
+                    y: { formatter: (val) => formatVolume(val) }
+                }
+            };
+
+            if (dailyChart) {
+                dailyChart.updateOptions(options);
+            } else {
+                dailyChart = new ApexCharts(document.getElementById('daily-volume-chart'), options);
+                dailyChart.render();
+            }
+        }
+
+        function updateExchangeChart(data) {
+            const exchangeTotals = {};
+            data.forEach(row => {
+                if (!exchangeTotals[row.exchange]) exchangeTotals[row.exchange] = 0;
+                exchangeTotals[row.exchange] += row.volume_usdt;
+            });
+
+            const sorted = Object.entries(exchangeTotals)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 15);
+
+            const options = {
+                series: [{
+                    name: 'Volume',
+                    data: sorted.map(([, vol]) => vol)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 420,
+                    background: 'transparent',
+                    fontFamily: 'JetBrains Mono, monospace',
+                    toolbar: { show: true }
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 4,
+                        distributed: true,
+                        barHeight: '70%'
+                    }
+                },
+                colors: sorted.map((_, i) => getColorForIndex(i)),
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val) => formatVolume(val),
+                    style: {
+                        colors: ['#f5f7fa'],
+                        fontFamily: 'JetBrains Mono',
+                        fontWeight: 500
+                    },
+                    offsetX: 8
+                },
+                xaxis: {
+                    categories: sorted.map(([name]) => name),
+                    labels: {
+                        style: { colors: '#a1a1aa', fontFamily: 'JetBrains Mono' },
+                        formatter: (val) => formatVolume(val)
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: '#f5f7fa', fontFamily: 'JetBrains Mono' }
+                    }
+                },
+                grid: { borderColor: '#2f2f2f', strokeDashArray: 3 },
+                tooltip: {
+                    theme: 'dark',
+                    y: { formatter: (val) => formatVolume(val) }
+                },
+                legend: { show: false }
+            };
+
+            if (exchangeChart) {
+                exchangeChart.updateOptions(options);
+            } else {
+                exchangeChart = new ApexCharts(document.getElementById('exchange-chart'), options);
+                exchangeChart.render();
+            }
+        }
+
+        function updateExchangeTable(data) {
+            const exchangeTotals = {};
+            data.forEach(row => {
+                if (!exchangeTotals[row.exchange]) exchangeTotals[row.exchange] = 0;
+                exchangeTotals[row.exchange] += row.volume_usdt;
+            });
+
+            const grandTotal = Object.values(exchangeTotals).reduce((a, b) => a + b, 0);
+            const sorted = Object.entries(exchangeTotals).sort((a, b) => b[1] - a[1]);
+            const maxVolume = sorted.length ? sorted[0][1] : 1;
+
+            const tbody = document.querySelector('#exchange-table tbody');
+            if (sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="loading">No data for selected filters</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = sorted.map(([exchange, volume], i) => `
+                <tr>
+                    <td style="color: var(--fg-muted);">${i + 1}</td>
+                    <td>${exchange}</td>
+                    <td class="volume">${formatVolume(volume)}</td>
+                    <td>
+                        <div class="bar-container">
+                            <div class="bar" style="width: ${(volume / maxVolume) * 150}px"></div>
+                            <span>${((volume / grandTotal) * 100).toFixed(1)}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        loadData();
+    </script>
+</body>
+</html>

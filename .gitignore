@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Screenshots (generated)
+*-screenshot.png
+
+# Temporary files
+*.tmp
+.DS_Store
+
+# Environment
+.env
+
+# Large data files (regenerate with export_data.py)
+volume_by_instance.csv
